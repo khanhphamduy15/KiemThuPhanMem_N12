@@ -1,0 +1,62 @@
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+
+public class session2 {
+    WebDriver driver;
+    private ExcelHelpers excel1;
+
+    @BeforeTest
+    public void init(){
+        System.setProperty("webdriver.chrome.driver", "C:\\Program Files\\WebDriver\\113\\chromedriver.exe");
+        //WebDriverManager.chromedriver().setup();
+        this.driver = new ChromeDriver();
+        this.driver.get("https://demo.themefreesia.com/shoppingcart/");
+        excel1 = new ExcelHelpers();
+    }
+    @Test
+    public void TC_001() throws Exception {
+        excel1.setExcelFile("src/test/resources/testData2.xlsx", "Sheet2");
+        driver.findElement(By.xpath("//a[@href=\"?add-to-cart=76\"]")).click();
+        //Thread.sleep(100);
+        driver.findElement(By.xpath("//a[@href=\"?add-to-cart=75\"]")).click();
+        //Thread.sleep(100);
+        driver.findElement(By.xpath("//a[@href=\"?add-to-cart=74\"]")).click();
+        Thread.sleep(3000);
+        driver.findElement(By.xpath("//a[@href=\"https://demo.themefreesia.com/shoppingcart/cart/\"]")).click();
+        int dem1=0, dem2=0,i;
+        for(i=0; i<6; i++){
+            driver.findElement(By.xpath("//input[@name=\"cart[fbd7939d674997cdb4692d34de8633c4][qty]\"]")).clear();
+            driver.findElement(By.xpath("//input[@name=\"cart[fbd7939d674997cdb4692d34de8633c4][qty]\"]")).
+                                sendKeys(excel1.getCellData("Quantity",i+1));
+            driver.findElement(By.xpath("//button[@name=\"update_cart\"]")).click();
+            Thread.sleep(5000);
+
+            String n = (String) excel1.getCellData("Quantity",i+1);
+            if(n.isEmpty()){
+                excel1.setCellData("pass",i+1,6);
+                dem2++;
+            }else if (!Character.isDigit(n.charAt(0))){
+                dem2++;
+                excel1.setCellData("pass", i+1, 6);
+            }else if (Integer.parseInt(n) > 50 ){
+                excel1.setCellData("fail", i+1, 6);
+                dem1++;
+            }else {
+                excel1.setCellData("pass", i+1, 6);
+                dem2++;
+            }
+        }
+        float pass = (float)dem2/(dem2+dem1)*100;
+        float fail = (float)dem1/(dem2+dem1)*100;
+        excel1.setCellData("Tỷ lệ pass: "+pass,8,6);
+        excel1.setCellData("Tỷ lệ fail: "+fail,9,6);
+    }
+    @AfterTest
+    public void tearDown(){
+        driver.quit();
+    }
+}

@@ -1,0 +1,38 @@
+package test;
+
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ExcelReader {
+
+    public static List<Integer> getQuantityData(String filePath) {
+        List<Integer> quantities = new ArrayList<>();
+
+        try (FileInputStream fileInputStream = new FileInputStream(new File(filePath));
+             Workbook workbook = new XSSFWorkbook(fileInputStream)) {
+            
+            Sheet sheet = workbook.getSheetAt(0); // Lấy sheet đầu tiên
+            
+            // Bắt đầu từ hàng 1 nếu có tiêu đề ở hàng 0
+            for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+                Row row = sheet.getRow(rowIndex);
+                if (row != null) {
+                    Cell quantityCell = row.getCell(1); // Cột B (0-based index)
+                    if (quantityCell != null && quantityCell.getCellType() == CellType.NUMERIC) {
+                        quantities.add((int) quantityCell.getNumericCellValue());
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        return quantities;
+    }
+}

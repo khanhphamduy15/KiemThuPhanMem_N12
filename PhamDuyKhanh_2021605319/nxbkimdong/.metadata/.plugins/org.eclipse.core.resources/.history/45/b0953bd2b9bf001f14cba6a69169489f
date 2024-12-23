@@ -1,0 +1,71 @@
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.testng.Assert;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+public class demo {
+
+    private WebDriver driver;
+    private ExcelHelpers excel1;
+
+    @BeforeTest
+    public void setUp() {
+        System.setProperty("webdriver.chrome.driver", "F:\\ky7\\KiemThuPM\\BTL\\chromedriver-win64\\chromedriver.exe");
+        driver = new ChromeDriver();
+        driver.get("https://demo.themefreesia.com/shoppingcart/");
+        excel1 = new ExcelHelpers();
+    }
+    @Test
+    public void updateCartTest() throws Exception {
+        excel1.setExcelFile("src/test/resources/testData2.xlsx", "Sheet2");
+        driver.findElement(By.xpath("//a[@href=\"?add-to-cart=76\"]")).click();
+        Thread.sleep(100);
+        driver.findElement(By.xpath("//a[@href=\"?add-to-cart=75\"]")).click();
+        Thread.sleep(100);
+        driver.findElement(By.xpath("//a[@href=\"?add-to-cart=74\"]")).click();
+        Thread.sleep(3000);
+        driver.findElement(By.xpath("//a[@href=\"https://demo.themefreesia.com/shoppingcart/cart/\"]")).click();
+        int passCount = 0, failCount = 0;
+        for (int i = 1; i < 7; i++) {
+            String inputValue = (String) excel1.getCellData("Quantity", i);
+            if (!inputValue.isEmpty()) {
+                driver.findElement(By.name("cart[fbd7939d674997cdb4692d34de8633c4][qty]")).clear();
+                driver.findElement(By.name("cart[fbd7939d674997cdb4692d34de8633c4][qty]")).sendKeys(inputValue);
+
+                driver.findElement(By.name("update_cart")).click();
+                Thread.sleep(5000);
+
+                WebElement errorMessage = driver.findElement(By.xpath("//div[@class='woocommerce-error']/ul/li"));
+                String actualMessage = ((WebElement) errorMessage).getText();
+                String expectedResult = (String) excel1.getCellData("Kết quả mong muốn", i);
+                if (actualMessage.equals(expectedResult)) {
+                    excel1.setCellData("pass", i, 7);
+                    passCount++;
+                } else {
+                    excel1.setCellData("fail", i, 7);
+                    failCount++;
+                }
+            }else {
+                excel1.setCellData("fail", i, 7);
+                failCount++;
+            }
+        }
+        float passPercentage = (float) passCount / (passCount + failCount) * 100;
+        float failPercentage = (float) failCount / (passCount + failCount) * 100;
+        excel1.setCellData("Tỷ lệ pass: " + passPercentage + "%", 8, 6);
+        excel1.setCellData("Tỷ lệ fail: " + failPercentage + "%", 9, 6);
+
+        // Kiểm tra kết quả kiểm thử
+        //Assert.assertEquals(failCount, 0, "Có " + failCount + " trường hợp kiểm thử không chính xác.");
+    }
+    @AfterTest
+    public void tearDown() {
+        driver.quit();
+    }
+
+
+}
